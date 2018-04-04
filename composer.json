@@ -1,5 +1,5 @@
 {
-    "name": "tuscanicz/soap",
+    "name": "cadoles/soap",
     "type": "library",
     "description": "A largely refactored besimple/soap used to build SOAP and WSDL based web services. This fork fixes a lot of errors and provides better API, robust, stable and modern codebase.",
     "keywords": ["soap", "soap server", "soap client"],
@@ -20,6 +20,10 @@
         {
             "name": "Petr Bechyně",
             "email": "mail@petrbechyne.com"
+        },
+        {
+            "name": "Ghislain Loaec",
+            "email": "gloaec@cadoles.com"
         }
     ],
     "require": {
