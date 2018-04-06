@@ -49,3 +49,4 @@ class DateTypeConverterTest extends \PHPUnit_Framework_TestCase
         $this->assertNull($date);
     }
 }
+

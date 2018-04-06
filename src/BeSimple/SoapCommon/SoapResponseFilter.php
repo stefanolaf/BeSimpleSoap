@@ -26,7 +26,6 @@ interface SoapResponseFilter
      * Modify SOAP response.
      *
      * @param SoapResponse $response SOAP response
-     * @param int $attachmentType = SoapOptions::SOAP_ATTACHMENTS_TYPE_SWA|SoapOptions::ATTACHMENTS_TYPE_MTOM|SoapOptions::ATTACHMENTS_TYPE_BASE64
      */
-    public function filterResponse(SoapResponse $response, $attachmentType);
+    public function filterResponse(SoapResponse $response);
 }

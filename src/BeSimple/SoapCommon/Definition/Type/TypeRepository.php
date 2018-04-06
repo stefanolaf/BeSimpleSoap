@@ -12,7 +12,7 @@
 
 namespace BeSimple\SoapCommon\Definition\Type;
 
-use BeSimple\SoapCommon\ClassMap;
+use BeSimple\SoapCommon\Classmap;
 
 /**
  * @author Christian Kerl <christian-kerl@web.de>
@@ -27,7 +27,7 @@ class TypeRepository
 
     protected $classmap;
 
-    public function __construct(ClassMap $classmap = null)
+    public function __construct(Classmap $classmap = null)
     {
         $this->classmap = $classmap;
     }
@@ -77,7 +77,7 @@ class TypeRepository
         $phpType = $type->getPhpType();
 
         $this->types[$phpType] = $type;
-        $this->addClassMap($type->getXmlType(), $phpType);
+        $this->addClassmap($type->getXmlType(), $phpType);
     }
 
     public function hasType($type)
@@ -119,12 +119,12 @@ class TypeRepository
         return $match[1];
     }
 
-    public function getClassMap()
+    public function getClassmap()
     {
         return $this->classmap;
     }
 
-    protected function addClassMap($xmlType, $phpType)
+    protected function addClassmap($xmlType, $phpType)
     {
         if (!$this->classmap) {
             return;

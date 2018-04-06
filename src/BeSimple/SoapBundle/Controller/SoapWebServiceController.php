@@ -16,8 +16,7 @@ use BeSimple\SoapBundle\Handler\ExceptionHandler;
 use BeSimple\SoapBundle\Soap\SoapRequest;
 use BeSimple\SoapBundle\Soap\SoapResponse;
 use BeSimple\SoapServer\SoapServerBuilder;
-use Symfony\Component\DependencyInjection\ContainerAwareInterface;
-use Symfony\Component\DependencyInjection\ContainerInterface;
+use Symfony\Component\DependencyInjection\ContainerAware;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\FlattenException;
@@ -29,13 +28,8 @@ use Symfony\Component\HttpKernel\Log\DebugLoggerInterface;
  * @author Christian Kerl <christian-kerl@web.de>
  * @author Francis Besset <francis.besset@gmail.com>
  */
-class SoapWebServiceController implements ContainerAwareInterface
+class SoapWebServiceController extends ContainerAware
 {
-    /**
-     * @var ContainerInterface
-     */
-    private $container;
-
     /**
      * @var \SoapServer
      */
@@ -62,14 +56,6 @@ class SoapWebServiceController implements ContainerAwareInterface
     private $headers = array();
 
     /**
-     * {@inheritDoc}
-     */
-    public function setContainer(ContainerInterface $container = null)
-    {
-        $this->container = $container;
-    }
-
-    /**
      * @return \BeSimple\SoapBundle\Soap\SoapResponse
      */
     public function callAction($webservice)
@@ -78,7 +64,7 @@ class SoapWebServiceController implements ContainerAwareInterface
 
         $this->serviceBinder = $webServiceContext->getServiceBinder();
 
-        $this->soapRequest = SoapRequest::createFromHttpRequest($this->container->get('request_stack')->getCurrentRequest());
+        $this->soapRequest = SoapRequest::createFromHttpRequest($this->container->get('request'));
         $this->soapServer  = $webServiceContext
             ->getServerBuilder()
             ->withSoapVersion11()

@@ -19,10 +19,12 @@ namespace BeSimple\SoapCommon\Mime;
  */
 abstract class PartHeader
 {
-    /** @var string[] array of headers with lower-cased keys */
-    private $headers;
-    /** @var string[] array of lower-cased keys and their original variants */
-    private $headersOriginalKeys;
+    /**
+     * Mime headers.
+     *
+     * @var array(string=>mixed|array(mixed))
+     */
+    protected $headers = array();
 
     /**
      * Add a new header to the mime part.
@@ -35,21 +37,19 @@ abstract class PartHeader
      */
     public function setHeader($name, $value, $subValue = null)
     {
-        $lowerCaseName = mb_strtolower($name);
-        $this->headersOriginalKeys[$lowerCaseName] = $name;
-        if (isset($this->headers[$lowerCaseName]) && !is_null($subValue)) {
-            if (!is_array($this->headers[$lowerCaseName])) {
-                $this->headers[$lowerCaseName] = [
-                    '@'    => $this->headers[$lowerCaseName],
+        if (isset($this->headers[$name]) && !is_null($subValue)) {
+            if (!is_array($this->headers[$name])) {
+                $this->headers[$name] = array(
+                    '@'    => $this->headers[$name],
                     $value => $subValue,
-                ];
+                );
             } else {
-                $this->headers[$lowerCaseName][$value] = $subValue;
+                $this->headers[$name][$value] = $subValue;
             }
-        } elseif (isset($this->headers[$lowerCaseName]) && is_array($this->headers[$lowerCaseName]) && isset($this->headers[$lowerCaseName]['@'])) {
-            $this->headers[$lowerCaseName]['@'] = $value;
+        } elseif (isset($this->headers[$name]) && is_array($this->headers[$name]) && isset($this->headers[$name]['@'])) {
+            $this->headers[$name]['@'] = $value;
         } else {
-            $this->headers[$lowerCaseName] = $value;
+            $this->headers[$name] = $value;
         }
     }
 
@@ -63,51 +63,20 @@ abstract class PartHeader
      */
     public function getHeader($name, $subValue = null)
     {
-        $lowerCaseName = mb_strtolower($name);
-        if (isset($this->headers[$lowerCaseName])) {
+        if (isset($this->headers[$name])) {
             if (!is_null($subValue)) {
-                if (is_array($this->headers[$lowerCaseName]) && isset($this->headers[$lowerCaseName][$subValue])) {
-                    return $this->headers[$lowerCaseName][$subValue];
+                if (is_array($this->headers[$name]) && isset($this->headers[$name][$subValue])) {
+                    return $this->headers[$name][$subValue];
                 } else {
                     return null;
                 }
-            } elseif (is_array($this->headers[$lowerCaseName]) && isset($this->headers[$lowerCaseName]['@'])) {
-                return $this->headers[$lowerCaseName]['@'];
+            } elseif (is_array($this->headers[$name]) && isset($this->headers[$name]['@'])) {
+                return $this->headers[$name]['@'];
             } else {
-                return $this->headers[$lowerCaseName];
+                return $this->headers[$name];
             }
         }
-
         return null;
-    }
-
-    public function getHeaders()
-    {
-        return $this->headers;
-    }
-
-    /**
-     * Get string array with MIME headers for usage in HTTP header (with CURL).
-     * Only 'Content-Type' and 'Content-Description' headers are returned.
-     *
-     * @return string[]
-     */
-    public function getHeadersForHttp()
-    {
-        $allowedHeadersLowerCase = [
-            'content-type',
-            'content-description',
-        ];
-        $headers = [];
-        foreach ($this->headers as $fieldName => $value) {
-            if (in_array($fieldName, $allowedHeadersLowerCase)) {
-                $fieldValue = $this->generateHeaderFieldValue($value);
-                // for http only ISO-8859-1
-                $headers[] = $this->headersOriginalKeys[$fieldName] . ': '. iconv('utf-8', 'ISO-8859-1//TRANSLIT', $fieldValue);
-            }
-        }
-
-        return $headers;
     }
 
     /**
@@ -117,37 +86,44 @@ abstract class PartHeader
      */
     protected function generateHeaders()
     {
+        $charset = strtolower($this->getHeader('Content-Type', 'charset'));
+        $preferences = array(
+            'scheme' => 'Q',
+            'input-charset' => 'utf-8',
+            'output-charset' => $charset,
+        );
         $headers = '';
         foreach ($this->headers as $fieldName => $value) {
             $fieldValue = $this->generateHeaderFieldValue($value);
-            $headers .= $this->headersOriginalKeys[$fieldName] . ': ' . $fieldValue . "\n";
+            // do not use proper encoding as Apache Axis does not understand this
+            // $headers .= iconv_mime_encode($field_name, $field_value, $preferences) . "\r\n";
+            $headers .= $fieldName . ': ' . $fieldValue . "\r\n";
         }
-
         return $headers;
     }
 
     /**
      * Generates a header field value from the given value paramater.
      *
-     * @param string[]|string $value Header value
+     * @param array(string=>string)|string $value Header value
+     *
      * @return string
      */
     protected function generateHeaderFieldValue($value)
     {
         $fieldValue = '';
-        if (is_array($value) === true) {
+        if (is_array($value)) {
             if (isset($value['@'])) {
                 $fieldValue .= $value['@'];
             }
             foreach ($value as $subName => $subValue) {
-                if ($subName !== '@') {
+                if ($subName != '@') {
                     $fieldValue .= '; ' . $subName . '=' . $this->quoteValueString($subValue);
                 }
             }
         } else {
             $fieldValue .= $value;
         }
-
         return $fieldValue;
     }
 
@@ -163,8 +139,8 @@ abstract class PartHeader
     {
         if (preg_match('~[()<>@,;:\\"/\[\]?=]~', $string)) {
             return '"' . $string . '"';
+        } else {
+            return $string;
         }
-
-        return $string;
     }
 }

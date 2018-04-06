@@ -13,8 +13,6 @@
 
 namespace BeSimple\SoapCommon;
 
-use DOMDocument;
-
 /**
  * Base class for SoapRequest and SoapResponse.
  *
@@ -47,12 +45,12 @@ abstract class SoapMessage
     /**
      * Content types for SOAP versions.
      *
-     * @var array (string=>string)
+     * @var array(string=>string)
      */
-    static protected $versionToContentTypeMap = [
+    static protected $versionToContentTypeMap = array(
         SOAP_1_1 => 'text/xml; charset=utf-8',
         SOAP_1_2 => 'application/soap+xml; charset=utf-8'
-    ];
+    );
 
     /**
      * SOAP action.
@@ -64,9 +62,9 @@ abstract class SoapMessage
     /**
      * Mime attachments.
      *
-     * @var \BeSimple\SoapCommon\Mime\Part[]
+     * @var array(\BeSimple\SoapCommon\Mime\Part)
      */
-    protected $attachments;
+    protected $attachments = array();
 
     /**
      * Message content (MIME Message or SOAP Envelope).
@@ -74,6 +72,13 @@ abstract class SoapMessage
      * @var string
      */
     protected $content;
+
+    /**
+     *
+     * Enter description here ...
+     * @var \DOMDocument
+     */
+    protected $contentDomDocument = null;
 
     /**
      * Message content type.
@@ -92,22 +97,22 @@ abstract class SoapMessage
     /**
      * SOAP version (SOAP_1_1|SOAP_1_2)
      *
-     * @var int
+     * @var string
      */
     protected $version;
 
     /**
     * Get content type for given SOAP version.
     *
-    * @param int $version SOAP version constant SOAP_1_1|SOAP_1_2
+    * @param string $version SOAP version constant SOAP_1_1|SOAP_1_2
     *
     * @return string
     * @throws \InvalidArgumentException
     */
     public static function getContentTypeForVersion($version)
     {
-        if (!in_array($version, [SOAP_1_1, SOAP_1_2])) {
-            throw new \InvalidArgumentException('Invalid SOAP version: ' . $version);
+        if (!in_array($version, array(SOAP_1_1, SOAP_1_2))) {
+            throw new \InvalidArgumentException("The 'version' argument has to be either 'SOAP_1_1' or 'SOAP_1_2'!");
         }
 
         return self::$versionToContentTypeMap[$version];
@@ -133,15 +138,10 @@ abstract class SoapMessage
         $this->action = $action;
     }
 
-    public function hasAttachments()
-    {
-        return $this->attachments !== null;
-    }
-
     /**
      * Get attachments.
      *
-     * @return \BeSimple\SoapCommon\Mime\Part[]
+     * @return array(\BeSimple\SoapCommon\Mime\Part)
      */
     public function getAttachments()
     {
@@ -151,7 +151,7 @@ abstract class SoapMessage
     /**
      * Set SOAP action.
      *
-     * @param \BeSimple\SoapCommon\Mime\Part[] $attachments
+     * @param array(\BeSimple\SoapCommon\Mime\Part) $attachments Attachment array
      */
     public function setAttachments(array $attachments)
     {
@@ -165,6 +165,10 @@ abstract class SoapMessage
      */
     public function getContent()
     {
+        if (null !== $this->contentDomDocument) {
+            $this->content = $this->contentDomDocument->saveXML();
+            $this->contentDomDocument = null;
+        }
         return $this->content;
     }
 
@@ -176,6 +180,9 @@ abstract class SoapMessage
     public function setContent($content)
     {
         $this->content = $content;
+        if (null !== $this->contentDomDocument) {
+            $this->contentDomDocument->loadXML($this->content);
+        }
     }
 
     /**
@@ -185,10 +192,12 @@ abstract class SoapMessage
      */
     public function getContentDocument()
     {
-        $contentDomDocument = new DOMDocument();
-        $contentDomDocument->loadXML($this->content);
+        if (null === $this->contentDomDocument) {
+            $this->contentDomDocument = new \DOMDocument();
+            $this->contentDomDocument->loadXML($this->content);
+        }
 
-        return $contentDomDocument;
+        return $this->contentDomDocument;
     }
 
     /**
@@ -232,9 +241,9 @@ abstract class SoapMessage
     }
 
     /**
-     * Get SOAP version SOAP_1_1|SOAP_1_2
+     * Get version.
      *
-     * @return int
+     * @return string
      */
     public function getVersion()
     {
@@ -244,7 +253,7 @@ abstract class SoapMessage
     /**
      * Set version.
      *
-     * @param int $version SOAP version SOAP_1_1|SOAP_1_2
+     * @param string $version SOAP version SOAP_1_1|SOAP_1_2
      */
     public function setVersion($version)
     {
