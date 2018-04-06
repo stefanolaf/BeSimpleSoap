@@ -1,6 +1,6 @@
 # BeSimpleSoap (Symfony 3.0)
 
-This fork aim to provide the BeSimpleSoap bundles compatibles with Symfony 3.
+This fork aims to provide the BeSimpleSoap bundles compatibles with Symfony 3.
 
 We forked the official
 [BeSimpleSoap](https://github.com/BeSimple/BeSimpleSoap) repository in
