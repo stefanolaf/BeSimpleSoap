@@ -13,8 +13,6 @@ namespace BeSimple\SoapBundle;
 
 use BeSimple\SoapBundle\ServiceBinding\ServiceBinder;
 use BeSimple\SoapCommon\Converter\TypeConverterCollection;
-use BeSimple\SoapCommon\SoapOptionsBuilder;
-use BeSimple\SoapServer\SoapServerOptionsBuilder;
 use BeSimple\SoapWsdl\Dumper\Dumper;
 use BeSimple\SoapServer\SoapServerBuilder;
 use Symfony\Component\Config\ConfigCache;
@@ -46,7 +44,7 @@ class WebServiceContext
         if (null === $this->serviceDefinition) {
             $cache = new ConfigCache(sprintf('%s/%s.definition.php', $this->options['cache_dir'], $this->options['name']), $this->options['debug']);
             if ($cache->isFresh()) {
-                $this->serviceDefinition = include $cache->getPath();
+                $this->serviceDefinition = include (string) $cache;
             } else {
                 if (!$this->loader->supports($this->options['resource'], $this->options['resource_type'])) {
                     throw new \LogicException(sprintf('Cannot load "%s" (%s)', $this->options['resource'], $this->options['resource_type']));
@@ -84,7 +82,7 @@ class WebServiceContext
             $cache->write($dumper->dump());
         }
 
-        return $cache->getPath();
+        return (string) $cache;
     }
 
     public function getServiceBinder()
@@ -104,14 +102,15 @@ class WebServiceContext
     public function getServerBuilder()
     {
         if (null === $this->serverBuilder) {
-            $soapServerBuilder = new SoapServerBuilder();
-            $this->serverBuilder = $soapServerBuilder->build(
-                SoapServerOptionsBuilder::createWithDefaults(),
-                SoapOptionsBuilder::createWithClassMap(
-                    $this->getWsdlFile(),
-                    $this->getServiceDefinition()->getTypeRepository()->getClassmap()
-                )
-            );
+            $this->serverBuilder = SoapServerBuilder::createWithDefaults()
+                ->withWsdl($this->getWsdlFile())
+                ->withClassmap($this->getServiceDefinition()->getTypeRepository()->getClassmap())
+                ->withTypeConverters($this->converters)
+            ;
+
+            if (null !== $this->options['cache_type']) {
+                $this->serverBuilder->withWsdlCache($this->options['cache_type']);
+            }
         }
 
         return $this->serverBuilder;

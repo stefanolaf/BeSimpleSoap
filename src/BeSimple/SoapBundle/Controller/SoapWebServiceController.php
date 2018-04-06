@@ -16,11 +16,10 @@ use BeSimple\SoapBundle\Handler\ExceptionHandler;
 use BeSimple\SoapBundle\Soap\SoapRequest;
 use BeSimple\SoapBundle\Soap\SoapResponse;
 use BeSimple\SoapServer\SoapServerBuilder;
-use Symfony\Component\Debug\Exception\FlattenException;
-use Symfony\Component\DependencyInjection\ContainerAwareInterface;
-use Symfony\Component\DependencyInjection\ContainerAwareTrait;
+use Symfony\Component\DependencyInjection\ContainerAware;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\Exception\FlattenException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpKernel\HttpKernelInterface;
 use Symfony\Component\HttpKernel\Log\DebugLoggerInterface;
@@ -29,10 +28,8 @@ use Symfony\Component\HttpKernel\Log\DebugLoggerInterface;
  * @author Christian Kerl <christian-kerl@web.de>
  * @author Francis Besset <francis.besset@gmail.com>
  */
-class SoapWebServiceController implements ContainerAwareInterface
+class SoapWebServiceController extends ContainerAware
 {
-    use ContainerAwareTrait;
-
     /**
      * @var \SoapServer
      */
@@ -67,7 +64,7 @@ class SoapWebServiceController implements ContainerAwareInterface
 
         $this->serviceBinder = $webServiceContext->getServiceBinder();
 
-        $this->soapRequest = SoapRequest::createFromHttpRequest($this->container->get('request_stack')->getCurrentRequest());
+        $this->soapRequest = SoapRequest::createFromHttpRequest($this->container->get('request'));
         $this->soapServer  = $webServiceContext
             ->getServerBuilder()
             ->withSoapVersion11()
@@ -141,8 +138,8 @@ class SoapWebServiceController implements ContainerAwareInterface
             $request->query->remove('_besimple_soap_fault');
         }
 
-        $server = SoapServerBuilder::createWithDefaults(__DIR__.'/../Handler/wsdl/exception.wsdl')
-            ->withWsdl()
+        $server = SoapServerBuilder::createWithDefaults()
+            ->withWsdl(__DIR__.'/../Handler/wsdl/exception.wsdl')
             ->withWsdlCacheNone()
             ->withHandler($handler)
             ->build()
