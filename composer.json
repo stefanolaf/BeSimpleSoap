@@ -1,5 +1,5 @@
 {
-    "name": "cocciagialla/soap",
+    "name": "lexxxurio/BeSimpleSoap",
     "type": "library",
     "description": "Build and consume SOAP and WSDL based web services",
     "keywords": ["soap"],
@@ -47,7 +47,7 @@
     },
     "extra": {
         "branch-alias": {
-            "dev-master": "master-dev"
+            "dev-master": "dev"
         }
     }
 }
